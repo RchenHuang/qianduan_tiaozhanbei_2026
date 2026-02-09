@@ -1,0 +1,102 @@
+// 颜色变量 - 深色主题
+$bg-primary: #0f0f1e;
+$bg-secondary: #1a1a2e;
+$bg-tertiary: #16213e;
+$bg-card: rgba(26, 26, 46, 0.8);
+
+$text-primary: #ffffff;
+$text-secondary: #b8b8d1;
+$text-tertiary: #8b8b9f;
+
+$accent-primary: #00d4ff;
+$accent-secondary: #7b2cbf;
+$accent-success: #00ff88;
+$accent-error: #ff3366;
+$accent-warning: #ffaa00;
+
+// 玻璃拟态效果
+$glass-bg: rgba(255, 255, 255, 0.05);
+$glass-border: rgba(255, 255, 255, 0.1);
+$glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+$glass-backdrop: blur(10px);
+
+// 间距 - 静态值（用于不需要响应的场景）
+$spacing-xs: 0.25rem; // 4px
+$spacing-sm: 0.5rem; // 8px
+$spacing-md: 1rem; // 16px
+$spacing-lg: 1.5rem; // 24px
+$spacing-xl: 2rem; // 32px
+$spacing-2xl: 3rem; // 48px
+$spacing-3xl: 4rem; // 64px
+
+// 流式间距 - 自动响应式（移动端 → 桌面端）
+$fluid-spacing-xs: clamp(0.125rem, 0.5vw, 0.25rem); // 2px ~ 4px
+$fluid-spacing-sm: clamp(0.25rem, 1vw, 0.5rem); // 4px ~ 8px
+$fluid-spacing-md: clamp(0.5rem, 2vw, 1rem); // 8px ~ 16px
+$fluid-spacing-lg: clamp(0.75rem, 3vw, 1.5rem); // 12px ~ 24px
+$fluid-spacing-xl: clamp(1rem, 4vw, 2rem); // 16px ~ 32px
+$fluid-spacing-2xl: clamp(1.5rem, 5vw, 3rem); // 24px ~ 48px
+
+// 圆角
+$radius-sm: 0.5rem; // 8px
+$radius-md: 1rem; // 16px
+$radius-lg: 1.5rem; // 24px
+$radius-full: 9999px;
+
+// 字体大小 - 静态值
+$font-xs: 0.75rem; // 12px
+$font-sm: 0.875rem; // 14px
+$font-base: 1rem; // 16px
+$font-lg: 1.125rem; // 18px
+$font-xl: 1.25rem; // 20px
+$font-2xl: 1.5rem; // 24px
+$font-3xl: 2rem; // 32px
+
+// 流式字体 - 自动响应式（移动端 → 桌面端）
+$fluid-font-xs: clamp(0.625rem, 1.5vw, 0.75rem); // 10px ~ 12px
+$fluid-font-sm: clamp(0.75rem, 2vw, 0.875rem); // 12px ~ 14px
+$fluid-font-base: clamp(0.875rem, 2.5vw, 1rem); // 14px ~ 16px
+$fluid-font-lg: clamp(1rem, 3vw, 1.125rem); // 16px ~ 18px
+$fluid-font-xl: clamp(1.125rem, 3.5vw, 1.25rem); // 18px ~ 20px
+$fluid-font-2xl: clamp(1.25rem, 4vw, 1.5rem); // 20px ~ 24px
+$fluid-font-3xl: clamp(1.5rem, 5vw, 2rem); // 24px ~ 32px
+
+// 字重
+$font-normal: 400;
+$font-medium: 500;
+$font-semibold: 600;
+$font-bold: 700;
+
+// 阴影
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+$shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+
+// 过渡
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Z-index
+$z-dropdown: 1000;
+$z-sticky: 1020;
+$z-fixed: 1030;
+$z-modal-backdrop: 1040;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
+
+// 视口高度变量 - 支持现代浏览器的动态视口
+$vh-fallback: 100vh; // 旧浏览器回退
+$vh-small: 100svh;   // 小视口高度（不包含浏览器UI）
+$vh-large: 100lvh;   // 大视口高度（包含浏览器UI）
+$vh-dynamic: 100dvh; // 动态视口高度（推荐）
+
+// 断点
+$breakpoint-xs: 320px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;

@@ -1,0 +1,322 @@
+@use './variables.scss' as *;
+
+// 响应式混入
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == xs {
+    @media (min-width: $breakpoint-xs) {
+      @content;
+    }
+  } @else if $breakpoint == sm {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $breakpoint == md {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $breakpoint == lg {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $breakpoint == xl {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  } @else if $breakpoint == 2xl {
+    @media (min-width: $breakpoint-2xl) {
+      @content;
+    }
+  }
+}
+
+// 安全区域兼容
+@mixin safe-area-padding($position: all) {
+  @if $position == top {
+    padding-top: calc(#{$spacing-md} + var(--safe-area-inset-top));
+  } @else if $position == bottom {
+    padding-bottom: calc(#{$spacing-md} + var(--safe-area-inset-bottom));
+  } @else if $position == left {
+    padding-left: calc(#{$spacing-md} + var(--safe-area-inset-left));
+  } @else if $position == right {
+    padding-right: calc(#{$spacing-md} + var(--safe-area-inset-right));
+  } @else if $position == all {
+    padding-top: calc(#{$spacing-md} + var(--safe-area-inset-top));
+    padding-bottom: calc(#{$spacing-md} + var(--safe-area-inset-bottom));
+    padding-left: calc(#{$spacing-md} + var(--safe-area-inset-left));
+    padding-right: calc(#{$spacing-md} + var(--safe-area-inset-right));
+  }
+}
+
+// 玻璃拟态卡片
+@mixin glass-card($mobile-optimized: true) {
+  background: $glass-bg;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+
+  @if $mobile-optimized {
+    // 移动端性能优化：使用CSS变量控制
+    backdrop-filter: var(--glass-blur, $glass-backdrop);
+    -webkit-backdrop-filter: var(--glass-blur, $glass-backdrop);
+    box-shadow: var(--glass-shadow, $glass-shadow);
+
+    // 移动端：禁用模糊，减少阴影
+    @media (max-width: $breakpoint-sm) {
+      --glass-blur: none;
+      --glass-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+  } @else {
+    // 不优化版本：始终使用完整效果
+    backdrop-filter: $glass-backdrop;
+    -webkit-backdrop-filter: $glass-backdrop;
+    box-shadow: $glass-shadow;
+  }
+}
+
+// Flexbox 居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Grid 布局
+@mixin grid-layout($columns: 3, $gap: $spacing-md) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $gap;
+}
+
+// 文本省略
+@mixin text-ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// 按钮重置
+@mixin button-reset {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    outline: 2px solid $accent-primary;
+    outline-offset: 2px;
+  }
+}
+
+// 滚动条样式
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $bg-secondary;
+    border-radius: $radius-sm;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-sm;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// 动画
+@mixin fade-in($duration: $transition-base) {
+  animation: fadeIn $duration ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// 悬停效果
+@mixin hover-lift {
+  transition: transform $transition-base;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-4px);
+    }
+  }
+}
+
+// 点击反馈
+@mixin click-feedback {
+  transition: transform $transition-fast;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// 按钮自适应网格
+@mixin button-grid($min: 100px, $gap: $spacing-md) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax($min, 1fr));
+  gap: $gap;
+}
+
+// ============================================
+// 现代响应式 Mixin（使用 clamp + Container Queries）
+// ============================================
+
+// 移动端适配（max-width）
+@mixin mobile {
+  @media (max-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+// 平板端适配
+@mixin tablet {
+  @media (max-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+// 仅桌面端悬停（触摸设备不触发）
+@mixin hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+// 容器查询 - 需要父元素设置 container-type
+@mixin container($name: null) {
+  @if $name {
+    container-name: $name;
+  }
+  container-type: inline-size;
+}
+
+// 容器查询断点
+@mixin container-sm($name: null) {
+  @if $name {
+    @container #{$name} (max-width: 480px) {
+      @content;
+    }
+  } @else {
+    @container (max-width: 480px) {
+      @content;
+    }
+  }
+}
+
+@mixin container-md($name: null) {
+  @if $name {
+    @container #{$name} (max-width: 768px) {
+      @content;
+    }
+  } @else {
+    @container (max-width: 768px) {
+      @content;
+    }
+  }
+}
+
+// 自适应网格（无需媒体查询）
+@mixin auto-grid($min: 200px, $gap: $fluid-spacing-md) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, $min), 1fr));
+  gap: $gap;
+}
+
+// 流式内边距
+@mixin fluid-padding($y: $fluid-spacing-md, $x: $fluid-spacing-lg) {
+  padding: $y $x;
+}
+
+// 现代视口高度 - 支持动态视口
+@mixin viewport-height($type: dynamic) {
+  @if $type == dynamic {
+    // 动态视口高度（推荐）- 自动适应浏览器UI变化
+    height: $vh-fallback; // 回退
+    height: $vh-dynamic;
+  } @else if $type == small {
+    // 小视口高度 - 不包含浏览器UI（适合全屏应用）
+    height: $vh-fallback; // 回退
+    height: $vh-small;
+  } @else if $type == large {
+    // 大视口高度 - 包含浏览器UI
+    height: $vh-fallback; // 回退
+    height: $vh-large;
+  } @else {
+    // 传统视口高度
+    height: $vh-fallback;
+  }
+}
+
+// 最小视口高度
+@mixin min-viewport-height($type: dynamic) {
+  @if $type == dynamic {
+    min-height: $vh-fallback; // 回退
+    min-height: $vh-dynamic;
+  } @else if $type == small {
+    min-height: $vh-fallback; // 回退
+    min-height: $vh-small;
+  } @else if $type == large {
+    min-height: $vh-fallback; // 回退
+    min-height: $vh-large;
+  } @else {
+    min-height: $vh-fallback;
+  }
+}
+
+// 移动端按钮优化
+@mixin mobile-button {
+  // 基础样式
+  min-height: 44px; // iOS推荐的最小触摸目标
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-sm;
+  font-weight: $font-medium;
+  border-radius: $radius-md;
+  
+  // 防止文字换行
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  // 触摸优化
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  
+  // 移动端特定调整
+  @include mobile {
+    min-height: 40px;
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-xs;
+    
+    // 超小屏幕进一步优化
+    @media (max-width: 360px) {
+      min-height: 36px;
+      padding: $spacing-xs;
+      font-size: 11px;
+    }
+  }
+}
