@@ -1,0 +1,379 @@
+<!doctype html>
+<html>
+  <head>
+    <title>奇偶性 - Parity</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="数字逻辑推理训练">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+      body {
+        @apply bg-slate-900 font-sans text-white min-h-screen relative overflow-x-hidden;
+      }
+      .theme-bg {
+        @apply fixed inset-0 -z-50;
+        background-image: linear-gradient(135deg, #4c1d95 0%, #622A88 30%, #B12F80 60%, #FF8459 80%, #F9F871 100%);
+      }
+      .theme-bg::before {
+        content: '';
+        @apply absolute top-[-20%] left-[-20%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-80;
+        background-color: #2e1065; 
+        animation: float 10s infinite ease-in-out;
+      }
+      .theme-bg::after {
+        content: '';
+        @apply absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] rounded-full blur-[100px] opacity-60;
+        background-color: #FF8459;
+        animation: float 15s infinite ease-in-out reverse;
+      }
+      @keyframes float {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(30px, 20px); }
+      }
+
+      .glass-panel {
+        @apply bg-white/10 backdrop-blur-xl border border-white/30 text-white shadow-2xl rounded-3xl;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+      }
+
+      .btn-outline {
+        @apply px-6 py-2 rounded-full border border-white/60 text-white font-medium transition-all duration-300;
+        @apply hover:bg-white hover:text-[#622A88] hover:border-white hover:shadow-lg hover:-translate-y-0.5;
+        @apply active:scale-95 active:shadow-none;
+      }
+      .btn-solid {
+        @apply px-6 py-2 rounded-full bg-white text-[#622A88] font-bold border border-white transition-all duration-300;
+        @apply hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:-translate-y-0.5;
+        @apply active:scale-95;
+      }
+
+      .hero-title {
+        @apply text-4xl md:text-6xl font-bold text-white drop-shadow-lg text-center tracking-wide mb-8;
+      }
+
+      .game-cell {
+        @apply w-20 h-20 md:w-24 md:h-24 text-3xl md:text-4xl font-bold transition-all duration-200;
+        @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl;
+        @apply hover:bg-white/20 hover:scale-105;
+      }
+      .game-cell.selected {
+        @apply bg-white/30 border-white/60 shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110;
+      }
+      .game-cell.white {
+        @apply bg-white/15;
+      }
+      .game-cell.black {
+        @apply bg-black/30;
+      }
+
+      .light {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .poiret {
+        font-family: 'Poiret One', cursive;
+      }
+      .center {
+        text-align: center;
+      }
+      .left {
+        float: left;
+      }
+      .right {
+        float: right;
+      }
+
+      .page-header {
+        position: fixed;
+        top: env(safe-area-inset-top, 0px);
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 24px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .back-button {
+        position: absolute;
+        left: 24px;
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .back-button:hover {
+        background: white;
+        color: #622A88;
+        transform: scale(1.05);
+      }
+
+      .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        color: white;
+      }
+
+      .dSelected {
+        position: absolute;
+        width: 5rem;
+        height: 5rem;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        pointer-events: none;
+        transition: all 0.2s ease;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+      .dSelected.active {
+        background-color: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+
+      @media (min-width: 768px) {
+        .dSelected {
+          width: 6rem;
+          height: 6rem;
+        }
+      }
+
+      #introtutorial {
+        background-image: url('../images/introtutorial.png');
+        width: 66vh;
+        height: 59vh;
+        background-position: center center;
+        background-size: contain;
+        background-repeat: no-repeat;
+        position: fixed;
+        display: none;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      #swipeArea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 150;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+
+      #overlay h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0;
+        padding: 0.6rem 1.2rem 0.4rem 1.2rem;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-radius: 1.5rem 1.5rem 0 0;
+        width: 100%;
+        max-width: 1400px;
+        box-sizing: border-box;
+        text-align: center;
+        color: #333;
+        font-weight: bold;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-bottom: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      #overlay #content {
+        font-size: 0.8rem;
+        margin-bottom: 2rem;
+        margin-top: -1px;
+        text-align: center;
+        padding: 0.4rem 1.2rem 0.6rem 1.2rem;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-radius: 0 0 1.5rem 1.5rem;
+        width: 100%;
+        max-width: 1400px;
+        box-sizing: border-box;
+        color: #333;
+        line-height: 1.6;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-top: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      #overlay #content strong {
+        color: #FF8459;
+        font-weight: bold;
+      }
+
+      #overlay #content em {
+        color: #B12F80;
+        font-style: normal;
+      }
+
+      #overlay #content h3 {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #333;
+        margin: 0.8rem 0 0.5rem 0;
+      }
+
+      #overlay #content h3:first-child {
+        margin-top: 0;
+      }
+
+      #overlay #content ul {
+        margin: 0.5rem 0;
+        padding-left: 1rem;
+        text-align: left;
+      }
+
+      #overlay #content li {
+        margin-bottom: 0.3rem;
+        line-height: 1.6;
+      }
+
+      #overlay #content p {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+      }
+
+      #overlay #holder button {
+        @apply btn-solid;
+      }
+
+      #board {
+        border-collapse: separate;
+        border-spacing: 0.5rem;
+        position: relative;
+      }
+
+      #box {
+        position: relative;
+      }
+
+      #board tbody tr:last-child td {
+        padding-top: 1rem;
+      }
+
+      #level {
+        @apply text-white/80 hover:text-white transition-colors;
+        text-decoration: none;
+        position: relative;
+        z-index: 5;
+      }
+
+      #reset {
+        position: relative;
+        z-index: 5;
+      }
+
+      #reset img {
+        @apply hover:scale-110 transition-transform;
+      }
+
+      @media (max-width: 640px) {
+        .game-cell {
+          @apply w-16 h-16 text-2xl;
+        }
+        .hero-title {
+          @apply text-3xl;
+        }
+      }
+    </style>
+
+    <link href='https://fonts.googleapis.com/css?family=Poiret+One|Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <div class="theme-bg"></div>
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+      <header class="page-header">
+        <button class="back-button" onclick="window.close()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 class="page-title">奇偶性</h1>
+        <div></div>
+      </header>
+
+      <div id="box" class="p-6 md:p-8 w-full max-w-md">
+        <div id="overlay" class="hidden">
+          <h1></h1>
+          <div id="content"></div>
+          <div id="holder">
+            <button></button>
+          </div>
+        </div>
+
+        <div id="swipeArea"></div>
+        <div class="dSelected" id="selector"></div>
+        <div id="introtutorial"></div>
+
+        <table id="board" class="w-full">
+          <tbody id="board_body">
+            <tr>
+              <td class="cell center game-cell" data-x="0" data-y="0">4</td>
+              <td class="cell center game-cell" data-x="1" data-y="0">4</td>
+              <td class="cell center game-cell" data-x="2" data-y="0">4</td>
+            </tr>
+            <tr>
+              <td class="cell center game-cell" data-x="0" data-y="1">4</td>
+              <td class="cell center game-cell" data-x="1" data-y="1">4</td>
+              <td class="cell center game-cell" data-x="2" data-y="1">4</td>
+            </tr>
+            <tr>
+              <td class="cell center game-cell" data-x="0" data-y="2">4</td>
+              <td class="cell center game-cell selected" data-x="1" data-y="2">4</td>
+              <td class="cell center game-cell" data-x="2" data-y="2">4</td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a id="level" href="#" class="light poiret left text-lg">关卡 #</a>
+              </td>
+              <td colspan="2" class="right">
+                <a id="reset" href="#" class="poiret">
+                  <img src="images/reset.png" alt="重置" class="w-8 h-8" />
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="scripts/story-data.js"></script>
+    <script src="scripts/production.js"></script>
+  </body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认知训练游戏平台</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style type="text/tailwindcss">
+        body {
+            @apply bg-slate-900 font-sans text-white min-h-screen relative overflow-x-hidden;
+        }
+        .theme-bg {
+            @apply fixed inset-0 -z-50;
+            background-image: linear-gradient(135deg, #4c1d95 0%, #622A88 30%, #B12F80 60%, #FF8459 80%, #F9F871 100%);
+        }
+        .theme-bg::before {
+            content: '';
+            @apply absolute top-[-20%] left-[-20%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-80;
+            background-color: #2e1065; 
+            animation: float 10s infinite ease-in-out;
+        }
+        .theme-bg::after {
+            content: '';
+            @apply absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] rounded-full blur-[100px] opacity-60;
+            background-color: #FF8459;
+            animation: float 15s infinite ease-in-out reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 20px); }
+        }
+
+        .glass-panel {
+            @apply bg-white/10 backdrop-blur-xl border border-white/30 text-white shadow-2xl rounded-3xl;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-outline {
+            @apply px-4 py-2 rounded-full border border-white/60 text-white font-medium transition-all duration-300 text-sm;
+            @apply hover:bg-white hover:text-[#622A88] hover:border-white hover:shadow-lg hover:-translate-y-0.5;
+            @apply active:scale-95 active:shadow-none;
+        }
+        .btn-solid {
+            @apply px-4 py-2 rounded-full bg-white text-[#622A88] font-bold border border-white transition-all duration-300 text-sm;
+            @apply hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:-translate-y-0.5;
+            @apply active:scale-95;
+        }
+
+        @media (min-width: 768px) {
+            .btn-outline {
+                @apply px-6 py-2 text-base;
+            }
+            .btn-solid {
+                @apply px-6 py-2 text-base;
+            }
+        }
+
+        .toggle-container {
+            @apply flex items-center justify-center p-1 border border-white/40 rounded-full bg-white/5 backdrop-blur-md;
+        }
+        .toggle-btn {
+            @apply px-6 py-2 rounded-full text-white font-medium transition-all duration-300;
+            @apply hover:bg-white/10;
+        }
+        .toggle-btn-active {
+            @apply px-6 py-2 rounded-full bg-white text-[#622A88] font-bold shadow-md transition-all duration-300;
+        }
+
+        .toggle-btn-sm {
+            @apply px-3 py-1 rounded-full text-white text-sm font-medium transition-all duration-300;
+            @apply hover:bg-white/10;
+        }
+        .toggle-btn-sm-active {
+            @apply px-3 py-1 rounded-full bg-white text-[#622A88] text-sm font-bold shadow-md transition-all duration-300;
+        }
+
+        .hero-title {
+            @apply text-3xl md:text-4xl lg:text-6xl font-bold text-white drop-shadow-lg text-center tracking-wide mb-6 md:mb-8;
+        }
+
+        .game-card {
+            @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 md:p-6 transition-all duration-300;
+            @apply hover:bg-white/20 hover:scale-105 hover:shadow-xl cursor-pointer;
+            min-height: 280px;
+        }
+
+        .score-badge {
+            @apply inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .score-excellent {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.5);
+            color: #FFD700;
+        }
+
+        .score-good {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .score-average {
+            background: rgba(177, 47, 128, 0.2);
+            border-color: rgba(177, 47, 128, 0.5);
+            color: #B12F80;
+        }
+
+        .score-poor {
+            background: rgba(76, 29, 149, 0.2);
+            border-color: rgba(76, 29, 149, 0.5);
+            color: #9CA3AF;
+        }
+
+        .tab-content {
+            @apply hidden;
+        }
+
+        .tab-content.active {
+            @apply block;
+        }
+
+        .scrollable-container {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .scrollable-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollable-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollable-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .scrollable-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-bg"></div>
+
+    <div class="min-h-screen p-4 md:p-8">
+        <div class="w-full px-2 md:px-0">
+            <h1 class="hero-title">认知训练游戏平台</h1>
+
+            <div class="flex flex-wrap gap-3 justify-center mb-8">
+                <button class="btn-solid px-4 py-2 text-sm md:px-6 md:py-2 md:text-base" onclick="switchTab('games', this)">游戏列表</button>
+                <button class="btn-outline px-4 py-2 text-sm md:px-6 md:py-2 md:text-base" onclick="switchTab('dashboard', this)">数据看板</button>
+                <button class="btn-outline px-4 py-2 text-sm md:px-6 md:py-2 md:text-base" onclick="switchTab('history', this)">历史记录</button>
+            </div>
+
+            <div id="games-tab" class="tab-content active">
+                <div class="flex flex-col gap-4 md:gap-6 max-w-4xl mx-auto">
+                    <div class="game-card flex flex-col justify-between h-full text-center" onclick="launchGame('schulte')">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold mb-3">🎯 舒尔特方格</h3>
+                            <p class="text-sm md:text-base opacity-80 mb-4">提升注意力和视觉搜索能力</p>
+                            <div class="text-xs md:text-sm opacity-60 mb-4 text-left px-2">
+                                <p class="mb-2">📌 <strong>游戏目标：</strong>按顺序快速点击 1-25 的数字</p>
+                                <p class="mb-2">🎮 <strong>操作方式：</strong>鼠标点击或触摸数字</p>
+                                <p>⚡ <strong>规则：</strong>按 1→2→3→...→25 的顺序点击，越快越好</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <span class="score-badge score-good" id="score-schulte">--</span>
+                        </div>
+                    </div>
+
+                    <div class="game-card flex flex-col justify-between h-full text-center" onclick="launchGame('stroop')">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold mb-3">🎨 Stroop测试</h3>
+                            <p class="text-sm md:text-base opacity-80 mb-4">训练抑制控制和认知灵活性</p>
+                            <div class="text-xs md:text-sm opacity-60 mb-4 text-left px-2">
+                                <p class="mb-2">📌 <strong>游戏目标：</strong>快速判断文字颜色而非文字含义</p>
+                                <p class="mb-2">🎮 <strong>操作方式：</strong>点击对应的颜色按钮</p>
+                                <p>⚡ <strong>规则：</strong>忽略文字内容，只看文字颜色，越快越好</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <span class="score-badge score-good" id="score-stroop">--</span>
+                        </div>
+                    </div>
+
+                    <div class="game-card flex flex-col justify-between h-full text-center" onclick="launchGame('parity')">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold mb-3">🔢 奇偶性</h3>
+                            <p class="text-sm md:text-base opacity-80 mb-4">数字逻辑推理训练</p>
+                            <div class="text-xs md:text-sm opacity-60 mb-4 text-left px-2">
+                                <p class="mb-2">📌 <strong>游戏目标：</strong>让 3x3 棋盘上的所有数字都相同</p>
+                                <p class="mb-2">🎮 <strong>操作方式：</strong>使用方向键移动选中的数字</p>
+                                <p class="mb-2">⚡ <strong>规则：</strong>每次移动，选中的数字 +1</p>
+                                <p>🎯 <strong>进阶：</strong>后续关卡有黑白模式，白色+1，黑色-1</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <span class="score-badge score-good" id="score-parity">--</span>
+                        </div>
+                    </div>
+
+                    <div class="game-card flex flex-col justify-between h-full text-center" onclick="launchGame('shape')">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold mb-3">⭐ 形状识别</h3>
+                            <p class="text-sm md:text-base opacity-80 mb-4">快速识别和分类形状</p>
+                            <div class="text-xs md:text-sm opacity-60 mb-4 text-left px-2">
+                                <p class="mb-2">📌 <strong>游戏目标：</strong>快速识别屏幕上显示的形状</p>
+                                <p class="mb-2">🎮 <strong>操作方式：</strong>点击对应的形状按钮</p>
+                                <p>⚡ <strong>规则：</strong>形状会逐渐消失，在消失前识别，越快越准越好</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center">
+                            <span class="score-badge score-good" id="score-shape">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboard-tab" class="tab-content">
+                <div class="glass-panel p-6 md:p-8 mb-6 md:mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center">综合得分</h2>
+                    <div class="flex justify-center mb-6 md:mb-8">
+                        <div class="score-badge score-excellent text-5xl md:text-6xl w-28 h-28 md:w-32 md:h-32" id="overall-score">--</div>
+                    </div>
+                    <p class="text-center text-base md:text-lg opacity-80" id="overall-feedback">完成游戏后查看综合评价</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 w-full">
+                    <div class="glass-panel p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-4">能力维度分析</h3>
+                        <canvas id="abilityChart"></canvas>
+                    </div>
+
+                    <div class="glass-panel p-4 md:p-6">
+                        <h3 class="text-lg md:text-xl font-bold mb-4">游戏完成度</h3>
+                        <canvas id="completionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history-tab" class="tab-content">
+                <div class="glass-panel p-4 md:p-8 mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center">历史得分趋势</h2>
+                    
+                    <div class="flex flex-wrap justify-center gap-2 mb-6">
+                        <button class="toggle-btn toggle-btn-active" data-game="all" onclick="filterHistory('all', this)">全部</button>
+                        <button class="toggle-btn" data-game="schulte" onclick="filterHistory('schulte', this)">舒尔特方格</button>
+                        <button class="toggle-btn" data-game="stroop" onclick="filterHistory('stroop', this)">Stroop测试</button>
+                        <button class="toggle-btn" data-game="parity" onclick="filterHistory('parity', this)">奇偶性</button>
+                        <button class="toggle-btn" data-game="shape" onclick="filterHistory('shape', this)">形状识别</button>
+                    </div>
+                    
+                    <canvas id="historyChart"></canvas>
+                </div>
+
+                <div class="glass-panel p-4 md:p-6 w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg md:text-xl font-bold">最近游戏记录</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="toggle-btn-sm toggle-btn-sm-active" data-game="all" onclick="filterRecentGames('all', this)">全部</button>
+                            <button class="toggle-btn-sm" data-game="schulte" onclick="filterRecentGames('schulte', this)">舒尔特</button>
+                            <button class="toggle-btn-sm" data-game="stroop" onclick="filterRecentGames('stroop', this)">Stroop</button>
+                            <button class="toggle-btn-sm" data-game="parity" onclick="filterRecentGames('parity', this)">奇偶</button>
+                            <button class="toggle-btn-sm" data-game="shape" onclick="filterRecentGames('shape', this)">形状</button>
+                        </div>
+                    </div>
+                    <div id="recent-games" class="scrollable-container space-y-3 md:space-y-4">
+                        <p class="text-center opacity-60">暂无游戏记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameScores = {
+            schulte: null,
+            stroop: null,
+            parity: null,
+            shape: null
+        };
+
+        let gameHistory = [];
+
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.btn-solid, .btn-outline').forEach(btn => {
+                btn.classList.remove('btn-solid');
+                btn.classList.add('btn-outline');
+            });
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            btnElement.classList.remove('btn-outline');
+            btnElement.classList.add('btn-solid');
+
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'history') {
+                currentHistoryFilter = 'all';
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    btn.classList.remove('toggle-btn-active');
+                });
+                document.querySelector('.toggle-btn[data-game="all"]').classList.add('toggle-btn-active');
+                
+                currentRecentGamesFilter = 'all';
+                document.querySelectorAll('.toggle-btn-sm').forEach(btn => {
+                    btn.classList.remove('toggle-btn-sm-active');
+                });
+                document.querySelector('.toggle-btn-sm[data-game="all"]').classList.add('toggle-btn-sm-active');
+                
+                updateHistory();
+            }
+        }
+
+        function launchGame(gameId) {
+            const gameUrls = {
+                schulte: 'http://localhost:4173/schulte',
+                stroop: 'http://localhost:4173/stroop',
+                parity: 'games/parity/index.html',
+                shape: 'games/shape/index.html'
+            };
+
+            const url = gameUrls[gameId];
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+
+        function recordGameScore(gameId, score, details) {
+            gameScores[gameId] = score;
+            
+            const record = {
+                gameId: gameId,
+                score: score,
+                details: details,
+                timestamp: new Date().toISOString()
+            };
+            
+            gameHistory.push(record);
+            
+            updateScoreBadge(gameId, score);
+            saveToLocalStorage();
+        }
+
+        function updateScoreBadge(gameId, score) {
+            const badge = document.getElementById('score-' + gameId);
+            if (badge) {
+                badge.textContent = Math.round(score);
+                badge.className = 'score-badge ' + getScoreClass(score);
+            }
+        }
+
+        function getScoreClass(score) {
+            if (score >= 95) return 'score-excellent';
+            if (score >= 80) return 'score-good';
+            if (score >= 60) return 'score-average';
+            return 'score-poor';
+        }
+
+        function getFeedback(score) {
+            if (score >= 95) return '🏆 卓越！你的认知能力极强，表现优异！';
+            if (score >= 80) return '⭐ 优秀！你的认知能力良好，继续保持！';
+            if (score >= 60) return '✅ 良好！有进步空间，建议增加训练时间。';
+            return '📈 待提升！需要更多练习，建议从简单难度开始。';
+        }
+
+        function calculateOverallScore() {
+            const scores = Object.values(gameScores).filter(s => s !== null);
+            if (scores.length === 0) return 0;
+            return scores.reduce((a, b) => a + b, 0) / scores.length;
+        }
+
+        function updateDashboard() {
+            const overallScore = calculateOverallScore();
+            const overallBadge = document.getElementById('overall-score');
+            const feedback = document.getElementById('overall-feedback');
+
+            if (overallScore > 0) {
+                overallBadge.textContent = Math.round(overallScore);
+                overallBadge.className = 'score-badge ' + getScoreClass(overallScore) + ' text-6xl w-32 h-32';
+                feedback.textContent = getFeedback(overallScore);
+            }
+
+            updateAbilityChart();
+            updateCompletionChart();
+        }
+
+        function updateAbilityChart() {
+            const ctx = document.getElementById('abilityChart').getContext('2d');
+            
+            const abilities = {
+                attention: { games: ['schulte'], label: '注意力' },
+                executive: { games: ['stroop'], label: '执行功能' },
+                logic: { games: ['parity', 'shape'], label: '逻辑思维' }
+            };
+
+            const labels = [];
+            const data = [];
+
+            for (const [key, ability] of Object.entries(abilities)) {
+                const scores = ability.games.map(g => gameScores[g]).filter(s => s !== null);
+                if (scores.length > 0) {
+                    labels.push(ability.label);
+                    data.push(scores.reduce((a, b) => a + b, 0) / scores.length);
+                }
+            }
+
+            if (window.abilityChartInstance) {
+                window.abilityChartInstance.destroy();
+            }
+
+            window.abilityChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '能力得分',
+                        data: data,
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { size: 10 }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                            pointLabels: { 
+                                color: 'white', 
+                                font: { size: window.innerWidth < 768 ? 10 : 12 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateCompletionChart() {
+            const ctx = document.getElementById('completionChart').getContext('2d');
+            
+            const completed = Object.values(gameScores).filter(s => s !== null).length;
+            const total = Object.keys(gameScores).length;
+
+            if (window.completionChartInstance) {
+                window.completionChartInstance.destroy();
+            }
+
+            window.completionChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已完成', '未完成'],
+                    datasets: [{
+                        data: [completed, total - completed],
+                        backgroundColor: [
+                            'rgba(255, 255, 255, 0.8)',
+                            'rgba(255, 255, 255, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 255, 255, 1)',
+                            'rgba(255, 255, 255, 0.3)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                color: 'white',
+                                font: { size: window.innerWidth < 768 ? 10 : 12 },
+                                padding: window.innerWidth < 768 ? 10 : 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        let currentHistoryFilter = 'all';
+        let currentRecentGamesFilter = 'all';
+
+        function filterHistory(filter, btnElement) {
+            currentHistoryFilter = filter;
+            
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('toggle-btn-active');
+            });
+            btnElement.classList.add('toggle-btn-active');
+            
+            updateHistory();
+        }
+
+        function filterRecentGames(filter, btnElement) {
+            currentRecentGamesFilter = filter;
+            
+            document.querySelectorAll('.toggle-btn-sm').forEach(btn => {
+                btn.classList.remove('toggle-btn-sm-active');
+            });
+            btnElement.classList.add('toggle-btn-sm-active');
+            
+            updateRecentGames();
+        }
+
+        function updateHistory() {
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            
+            const gameLabels = {
+                schulte: '舒尔特方格',
+                stroop: 'Stroop测试',
+                parity: '奇偶性',
+                shape: '形状识别'
+            };
+
+            const labels = [];
+            const data = [];
+
+            const filteredHistory = currentHistoryFilter === 'all' 
+                ? gameHistory 
+                : gameHistory.filter(record => record.gameId === currentHistoryFilter);
+
+            filteredHistory.forEach((record, index) => {
+                labels.push((index + 1) + '. ' + gameLabels[record.gameId]);
+                data.push(record.score);
+            });
+
+            if (window.historyChartInstance) {
+                window.historyChartInstance.destroy();
+            }
+
+            window.historyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '得分',
+                        data: data,
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { size: 10 }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' }
+                        },
+                        x: {
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                font: { size: 10 },
+                                maxRotation: window.innerWidth < 768 ? 45 : 0,
+                                minRotation: window.innerWidth < 768 ? 45 : 0
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            updateRecentGames();
+        }
+
+        function updateRecentGames() {
+            const container = document.getElementById('recent-games');
+            
+            const filteredHistory = currentRecentGamesFilter === 'all' 
+                ? gameHistory 
+                : gameHistory.filter(record => record.gameId === currentRecentGamesFilter);
+            
+            if (filteredHistory.length === 0) {
+                container.innerHTML = '<p class="text-center opacity-60">暂无游戏记录</p>';
+                return;
+            }
+
+            const gameLabels = {
+                schulte: '舒尔特方格',
+                stroop: 'Stroop测试',
+                parity: '奇偶性',
+                shape: '形状识别'
+            };
+
+            const recentRecords = filteredHistory.slice(-50).reverse();
+            
+            container.innerHTML = recentRecords.map(record => {
+                const date = new Date(record.timestamp);
+                const timeStr = date.toLocaleString('zh-CN');
+                const scoreClass = getScoreClass(record.score);
+                
+                return `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 md:p-4 bg-white/5 rounded-xl gap-2 sm:gap-0">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                            <span class="font-bold text-sm md:text-base">${gameLabels[record.gameId]}</span>
+                            <span class="text-xs opacity-60">${timeStr}</span>
+                        </div>
+                        <div class="score-badge ${scoreClass} text-base md:text-lg w-10 h-10 md:w-12 md:h-12 self-end sm:self-center">
+                            ${Math.round(record.score)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('gameScores', JSON.stringify(gameScores));
+            localStorage.setItem('gameHistory', JSON.stringify(gameHistory));
+        }
+
+        function loadFromLocalStorage() {
+            const savedScores = localStorage.getItem('gameScores');
+            const savedHistory = localStorage.getItem('gameHistory');
+
+            if (savedScores) {
+                gameScores = JSON.parse(savedScores);
+                Object.keys(gameScores).forEach(gameId => {
+                    if (gameScores[gameId] !== null) {
+                        updateScoreBadge(gameId, gameScores[gameId]);
+                    }
+                });
+            }
+
+            if (savedHistory) {
+                gameHistory = JSON.parse(savedHistory);
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'gameScore') {
+                const { gameId, score, details } = event.data;
+                recordGameScore(gameId, score, details);
+            }
+        });
+
+        loadFromLocalStorage();
+    </script>
+</body>
+</html>

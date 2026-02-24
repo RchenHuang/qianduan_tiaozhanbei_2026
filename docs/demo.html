@@ -1,0 +1,168 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团队统一风格测试</title>
+
+<!-- 这里开始 -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style type="text/tailwindcss">
+    /* 全局背景 */
+    body {
+        @apply bg-slate-900 font-sans text-white min-h-screen relative overflow-x-hidden;
+    }
+    .theme-bg {
+        @apply fixed inset-0 -z-50;
+        background-image: linear-gradient(135deg, #4c1d95 0%, #622A88 30%, #B12F80 60%, #FF8459 80%, #F9F871 100%);
+    }
+    .theme-bg::before {
+        content: '';
+        @apply absolute top-[-20%] left-[-20%] w-[70%] h-[70%] rounded-full blur-[120px] opacity-80;
+        background-color: #2e1065; 
+        animation: float 10s infinite ease-in-out;
+    }
+    .theme-bg::after {
+        content: '';
+        @apply absolute bottom-[-20%] right-[-20%] w-[70%] h-[70%] rounded-full blur-[100px] opacity-60;
+        background-color: #FF8459;
+        animation: float 15s infinite ease-in-out reverse;
+    }
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(30px, 20px); }
+    }
+
+    /* 通用组件规范 */
+    
+    /* [卡片容器] */
+    .glass-panel {
+        @apply bg-white/10 backdrop-blur-xl border border-white/30 text-white shadow-2xl rounded-3xl;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+
+    /* [普通按钮] */
+    .btn-outline {
+        @apply px-6 py-2 rounded-full border border-white/60 text-white font-medium transition-all duration-300;
+        @apply hover:bg-white hover:text-[#622A88] hover:border-white hover:shadow-lg hover:-translate-y-0.5;
+        @apply active:scale-95 active:shadow-none;
+    }
+    .btn-solid {
+        @apply px-6 py-2 rounded-full bg-white text-[#622A88] font-bold border border-white transition-all duration-300;
+        @apply hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] hover:-translate-y-0.5;
+        @apply active:scale-95;
+    }
+
+    /* 胶囊切换器  */
+    
+    /* 外壳 */
+    .toggle-container {
+        @apply inline-flex items-center p-1 border border-white/40 rounded-full bg-white/5 backdrop-blur-md;
+    }
+    
+    /* 默认状态的按钮 (透明) */
+    .toggle-btn {
+        @apply px-6 py-2 rounded-full text-white font-medium transition-all duration-300;
+        @apply hover:bg-white/10;
+    }
+    
+    /* 激活状态的按钮 (白色实心) */
+    .toggle-btn-active {
+        @apply px-6 py-2 rounded-full bg-white text-[#622A88] font-bold shadow-md transition-all duration-300;
+    }
+
+    
+    /* [标题] */
+    .hero-title {
+        @apply text-4xl md:text-6xl font-bold text-white drop-shadow-lg text-center tracking-wide mb-8;
+    }
+</style>
+<!-- 这里结束 -->
+ 
+<body>
+    <div class="theme-bg"></div>
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 space-y-12">
+
+        <h1 class="hero-title">风格统一测试</h1>
+
+        <div class="space-y-6 text-center border-b border-white/20 pb-8 w-full max-w-2xl">
+            <p class="opacity-80 mb-4 font-bold text-xl">-- 胶囊切换器演示 (Toggle Switch) --</p>
+            <p class="text-sm opacity-60 mb-4">用于二选一的状态切换</p>
+
+            <div class="mb-4">
+                <p class="text-xs mb-2 opacity-50">状态 A：左侧激活</p>
+                <div class="toggle-container">
+                    <button class="toggle-btn-active">
+                        简单模式
+                    </button>
+                    <button class="toggle-btn">
+                        困难模式
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-xs mb-2 opacity-50">状态 B：右侧激活</p>
+                <div class="toggle-container">
+                    <button class="toggle-btn">
+                        按月付费
+                    </button>
+                    <button class="toggle-btn-active">
+                        按年付费 (省20%)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="space-y-6 text-center">
+            <p class="opacity-80 mb-4 font-bold text-xl">-- 通用按钮演示 (General Buttons) --</p>
+            <p class="text-sm opacity-60 mb-4">用于执行动作或是跳转</p>
+            
+            <div class="flex gap-4 justify-center wrap">
+                <button class="btn-solid">开始游戏</button>
+                <button class="btn-outline">查看规则</button>
+                <button class="btn-outline">关于我们</button>
+            </div>
+        </div>
+
+
+        <div class="glass-panel p-8 max-w-2xl w-full text-center mt-8">
+            <h2 class="text-2xl font-bold mb-4">统一的卡片容器</h2>
+            <p class="opacity-80 leading-relaxed mb-8">
+                这个卡片使用了 <code>.glass-panel</code> 类。<br>
+                统一的大圆角 (rounded-3xl) 和深色投影 (shadow-2xl)。
+            </p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400" class="rounded-2xl opacity-80 hover:opacity-100 transition shadow-lg">
+                <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400" class="rounded-2xl opacity-80 hover:opacity-100 transition shadow-lg">
+            </div>
+        </div>
+
+    </div>
+    <script>
+    // 1. 找到页面上所有的“胶囊容器”
+    const toggles = document.querySelectorAll('.toggle-container');
+
+    // 2. 给每个容器装上“监控”
+    toggles.forEach(container => {
+        // 找到在这个容器里的所有按钮
+        const buttons = container.querySelectorAll('button');
+
+        buttons.forEach(btn => {
+            // 3. 监听点击事件
+            btn.addEventListener('click', () => {
+                
+                // A. 先把大家都变成“灭”的状态 (重置)
+                buttons.forEach(b => {
+                    b.classList.remove('toggle-btn-active'); // 脱掉白衣服
+                    b.classList.add('toggle-btn');           // 换上透明衣服
+                });
+
+                // B. 再把被点的这个变成“亮”的状态 (激活)
+                btn.classList.remove('toggle-btn');          // 脱掉透明衣服
+                btn.classList.add('toggle-btn-active');      // 换上白衣服
+            });
+        });
+    });
+</script>
+</body>

@@ -1,0 +1,151 @@
+name: Android Release
+
+on:
+  # Tag 触发（推荐）
+  push:
+    tags:
+      - 'android-v*'
+
+  # 手动触发（可选指定版本）
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (如 1.0.0)，留空则从 package.json 读取'
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 允许创建 Release 和推送代码
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build web assets (without CDN)
+        run: DISABLE_CDN=true pnpm build
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required Android SDK components
+        run: |
+          echo "Installing Android SDK components..."
+          sdkmanager \
+            "platforms;android-35" \
+            "build-tools;34.0.0" \
+            "platform-tools" \
+            "cmdline-tools;latest"
+          yes | sdkmanager --licenses >/dev/null
+
+      - name: Clean project (lightweight)
+        run: |
+          rm -rf android/.gradle android/build android/app/build
+          rm -rf android/capacitor-android android/capacitor-cordova-android-plugins
+          pnpm store prune
+          chmod +x android/gradlew
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Setup signing and Gradle properties
+        run: |
+          cd android
+          # 使用 debug keystore（仅用于测试；生产请替换为正式密钥）
+          cat >> gradle.properties <<EOF
+          MYAPP_RELEASE_STORE_FILE=debug.keystore
+          MYAPP_RELEASE_STORE_PASSWORD=android
+          MYAPP_RELEASE_KEY_ALIAS=androiddebugkey
+          MYAPP_RELEASE_KEY_PASSWORD=android
+          org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=512m
+          org.gradle.daemon=false
+          org.gradle.parallel=true
+          android.useAndroidX=true
+          android.enableJetifier=false
+          # ✅ 抑制 AGP 8.2.1 对 compileSdk=35 的警告
+          android.suppressUnsupportedCompileSdk=35
+          EOF
+
+      - name: Build Android Release
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/android-v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/android-v}"
+          else
+            # 从 build.gradle 读取 Android 版本作为 fallback
+            VERSION=$(grep 'versionName' android/app/build.gradle | sed 's/.*versionName "\([^"]*\)".*/\1/')
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Build version: $VERSION"
+
+      - name: Rename APK
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/*.apk release/NeuroFlex-v${{ steps.get_version.outputs.VERSION }}.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: android-v${{ steps.get_version.outputs.VERSION }}
+          files: release/NeuroFlex-v${{ steps.get_version.outputs.VERSION }}.apk
+          name: Android v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## NeuroFlex Android v${{ steps.get_version.outputs.VERSION }}
+
+            ### 下载
+            点击下方 APK 文件下载安装
+
+            ### 更新内容
+            - 请查看 commit 记录
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update app-version.json
+        run: |
+          DOWNLOAD_BASE_URL="${{ vars.DOWNLOAD_BASE_URL || 'https://download-neuroflex.061129.xyz' }}"
+          mkdir -p public
+          cat > public/app-version.json << EOF
+          {
+            "version": "${{ steps.get_version.outputs.VERSION }}",
+            "versionCode": $(node -p "const v='${{ steps.get_version.outputs.VERSION }}'.split('.'); v[0]*10000+v[1]*100+Number(v[2])"),
+            "downloadUrl": "${DOWNLOAD_BASE_URL}/android-v${{ steps.get_version.outputs.VERSION }}/NeuroFlex-v${{ steps.get_version.outputs.VERSION }}.apk",
+            "githubUrl": "https://github.com/${{ github.repository }}/releases/download/android-v${{ steps.get_version.outputs.VERSION }}/NeuroFlex-v${{ steps.get_version.outputs.VERSION }}.apk",
+            "changelog": "版本 ${{ steps.get_version.outputs.VERSION }} 发布",
+            "releaseDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Commit app-version.json
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/app-version.json
+          git diff --cached --quiet || git commit -m "chore: update app-version.json to v${{ steps.get_version.outputs.VERSION }}"
+          git push origin HEAD:main
